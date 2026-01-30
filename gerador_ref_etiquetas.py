@@ -77,7 +77,13 @@ arquivo_saida = 'planilha_com_etiquetas_final.xlsx'
 print(f"--- Processando {arquivo_entrada} ---")
 
 if os.path.exists(arquivo_entrada):
-    df = pd.read_excel(arquivo_entrada)
+    # --- CORREÇÃO APLICADA AQUI ---
+    # dtype={'NOME_COLUNA': str} força o Pandas a ler como TEXTO.
+    # Isso preserva os zeros à esquerda (ex: '0789' continua '0789').
+    df = pd.read_excel(
+        arquivo_entrada, 
+        dtype={'Cód.Barra': str, 'Código': str}
+    )
     
     # Aplica a função
     df['Ref./SKU'] = df.apply(gerar_sku, axis=1)

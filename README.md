@@ -77,5 +77,15 @@ O sistema reconhece os seguintes padrões na descrição do produto (ex: "AN ANE
 | PG | Pingente |
 | CL | Colar |
 
+## 🔄 Configuração Avançada (Lógica Alternativa)
+Por padrão, o script espera que a descrição comece com o código (ex: AN ...).
+
+Caso suas planilhas não sigam esse padrão (ex: descrições como "Anel de Ouro" sem o código no início), o código possui uma Lógica de Reserva implementada, mas desativada.
+
+Para ativar:
+- Abra o arquivo gerador_ref_etiquetas.py.
+- Localize e descomente o dicionário mapa_antigo.
+- Na função definir_prefixo, descomente o bloco final que percorre esse mapa procurando palavras-chave na descrição.
+
 ## 📝 Autor
 Desenvolvido por **Igor Owen**. Projeto criado para otimização de processos de ERP e logística.
