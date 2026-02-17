@@ -5,7 +5,6 @@ import os
 # Se a primeira palavra da descrição for um desses, ela vira o prefixo.
 CODIGOS_VALIDOS = [
     'AL', 'AN', 'BR', 'CJ', 'PS', 'CR', 'TN', 'PG', 'CL'
-    # Adicione aqui outros se houver (ex: 'CL' se colar for separado)
 ]
 
 # --- LÓGICA ANTIGA (RESERVA TÉCNICA) ---
@@ -39,9 +38,6 @@ def definir_prefixo(descricao):
         return primeira_palavra
     
     # --- LÓGICA ANTIGA (COMENTADA) ---
-    # Se a primeira palavra não for o código (ex: a descrição começa com "OURO"),
-    # descomente as linhas abaixo para tentar achar o código no meio do texto:
-    #
     # for chave, codigo in mapa_antigo.items():
     #     if chave in descricao:
     #         return codigo
@@ -61,11 +57,26 @@ def gerar_sku(row):
         parte_inteira = int(valor_float)
         centavos = int(round((valor_float - parte_inteira) * 100))
         
-        # Define o Prefixo usando a nova lógica (primeira palavra)
+        # Define o Prefixo (ex: "BR")
         prefixo = definir_prefixo(descricao)
         
-        # Monta o SKU
-        return f"{prefixo}{parte_inteira}R11{centavos:02d}0"
+        # Se o prefixo tiver menos de 2 letras (erro), retorna ERRO
+        if len(prefixo) < 2:
+            return "ERRO_PREFIXO"
+
+        # --- NOVA LÓGICA DE MONTAGEM DO SKU ---
+        # Exemplo: Valor 175.80, Prefixo BR
+        # 1. Primeira Letra (B)
+        # 2. Fixo "0"
+        # 3. Valor Inteiro (175)
+        # 4. Segunda Letra (R)
+        # 5. Fixo "11"
+        # 6. Centavos (80)
+        # 7. Fixo "0"
+        # Resultado: B0175R11800
+        
+        sku = f"{prefixo[0]}0{parte_inteira}{prefixo[1]}11{centavos:02d}0"
+        return sku
         
     except Exception:
         return "ERRO"
@@ -77,9 +88,7 @@ arquivo_saida = 'planilha_com_etiquetas_final.xlsx'
 print(f"--- Processando {arquivo_entrada} ---")
 
 if os.path.exists(arquivo_entrada):
-    # --- CORREÇÃO APLICADA AQUI ---
     # dtype={'NOME_COLUNA': str} força o Pandas a ler como TEXTO.
-    # Isso preserva os zeros à esquerda (ex: '0789' continua '0789').
     df = pd.read_excel(
         arquivo_entrada, 
         dtype={'Cód.Barra': str, 'Código': str}
@@ -92,14 +101,13 @@ if os.path.exists(arquivo_entrada):
     df.to_excel(arquivo_saida, index=False)
     
     # Relatório rápido
-    erros = df[df['Ref./SKU'].astype(str).str.startswith('XX')]
+    erros = df[df['Ref./SKU'].astype(str).str.startswith('X')] # Pega XX ou X...
     print("-" * 30)
     if erros.empty:
-        print("SUCESSO! Todos os itens identificados pelo código inicial.")
+        print("SUCESSO! Todos os itens identificados e decodificados corretamente.")
     else:
-        print(f"AVISO: {len(erros)} itens ficaram como 'XX'.")
-        print("Verifique se a descrição desses itens começa com o código correto (AN, BR, etc).")
-        print("Exemplos de descrições falhas:")
+        print(f"AVISO: {len(erros)} itens ficaram com prefixo desconhecido (XX).")
+        print("Verifique se a descrição desses itens começa com o código correto.")
         print(erros['Descrição'].head().tolist())
     print("-" * 30)
 else:
